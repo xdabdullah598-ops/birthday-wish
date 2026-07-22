@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birthday Wish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --maroon-deep:#6B0F26;
+    --maroon:#9B1B3D;
+    --maroon-light:#C6294F;
+    --cream:#FFF8EC;
+    --grid-line:#E8D8C8;
+    --ink:#4A1020;
+    --white:#FFFFFF;
+    --gold:#F0B429;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{ height:100%; }
+
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 26px),
+      var(--cream);
+    font-family:'Poppins', sans-serif;
+    color:var(--ink);
+    overflow-x:hidden;
+    overflow-y:auto;
+    padding:24px;
+    perspective:1400px;
+    position:relative;
+  }
+
+  /* Big curved maroon shapes bleeding from the edges, like the reference */
+  .side-shape{
+    position:fixed;
+    z-index:0;
+    pointer-events:none;
+    background:var(--maroon-deep);
+  }
+  .side-shape-left{
+    left:-190px; top:-60px; bottom:-60px;
+    width:360px;
+    border-radius:0 45% 55% 0 / 0 40% 60% 0;
+  }
+  .side-shape-right{
+    right:-140px; top:-140px;
+    width:320px; height:320px;
+    border-radius:50%;
+  }
+
+  .screen{
+    position:absolute;
+    inset:0;
+    z-index:1;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px 24px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    opacity:0;
+    filter:blur(8px);
+    transform-style:preserve-3d;
+    will-change:transform, opacity, filter;
+    transition:opacity 1.2s cubic-bezier(.16,1,.3,1), transform 1.2s cubic-bezier(.16,1,.3,1), filter 1.2s ease;
+  }
+
+  .screen.active{
+    display:flex;
+    opacity:1;
+    filter:blur(0);
+  }
+
+  .screen.leaving{
+    display:flex;
+    opacity:0;
+  }
+
+  /* Screen 1 — Hook: zoom in from center */
+  #screen1{ transform:scale(0.72) translateY(20px); }
+  #screen1.active{ transform:scale(1) translateY(0); }
+  #screen1.leaving{ transform:scale(1.18) translateY(-14px); }
+
+  /* Screen 2 — Tease: slide + rotate in from the left */
+  #screen2{ transform:translateX(-90px) rotate(-7deg); }
+  #screen2.active{ transform:translateX(0) rotate(0deg); }
+  #screen2.leaving{ transform:translateX(90px) rotate(7deg); }
+
+  /* Screen 3 — Reward: rise up from below */
+  #screen3{ transform:translateY(90px); }
+  #screen3.active{ transform:translateY(0); }
+  #screen3.leaving{ transform:translateY(-90px); }
+
+  /* Screen 4 — Birthday reveal: 3D flip */
+  #screen4{ transform:rotateY(95deg) scale(0.85); }
+  #screen4.active{ transform:rotateY(0deg) scale(1); }
+  #screen4.leaving{ transform:rotateY(-95deg) scale(0.85); }
+
+  /* Screen 5 — Envelope: slide + tilt in from the right */
+  #screen5{ transform:translateX(100px) rotate(8deg); }
+  #screen5.active{ transform:translateX(0) rotate(0deg); }
+  #screen5.leaving{ transform:translateX(-100px) rotate(-8deg); }
+
+  /* Screen 6 — Outro: gentle rise with depth */
+  #screen6{ transform:translateY(60px) scale(0.92) rotateX(8deg); }
+  #screen6.active{ transform:translateY(0) scale(1) rotateX(0deg); }
+  #screen6.leaving{ transform:translateY(-60px) scale(0.92) rotateX(-8deg); }
+
+  .card{
+    max-width:440px;
+    width:100%;
+    background:rgba(255,255,255,0.55);
+    border-radius:28px;
+    padding:26px 22px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 12px 30px rgba(107,15,38,0.15);
+  }
+
+  .screen-cat{
+    width:130px;
+    height:130px;
+    display:block;
+    margin:0 auto 18px;
+    filter:drop-shadow(0 8px 16px rgba(107,15,38,0.25));
+  }
+
+  h1.big-text{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:clamp(1.8rem, 6.5vw, 2.7rem);
+    line-height:1.35;
+    margin-bottom:14px;
+    color:var(--white);
+    -webkit-text-stroke:1.5px var(--maroon-deep);
+    paint-order:stroke fill;
+    text-shadow:3px 3px 0 rgba(0,0,0,0.25);
+  }
+
+  p.sub-text{
+    font-size:1.15rem;
+    font-weight:600;
+    opacity:0.85;
+    margin-bottom:28px;
+  }
+
+  .btn-row{
+    display:flex;
+    gap:20px;
+    justify-content:center;
+    flex-wrap:wrap;
+    position:relative;
+    min-height:66px;
+  }
+
+  button{
+    font-family:'Poppins', sans-serif;
+    font-size:18px;
+    font-weight:700;
+    padding:17px 42px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    letter-spacing:0.3px;
+    position:relative;
+    overflow:hidden;
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  button:active{ transform:scale(0.95); }
+
+  .btn-primary{
+    background:linear-gradient(135deg, var(--maroon-light), var(--maroon-deep) 70%);
+    background-size:200% 200%;
+    color:var(--white);
+    box-shadow:0 10px 24px rgba(107,15,38,0.4);
+    animation:btnGlow 2.6s ease-in-out infinite;
+  }
+  .btn-primary::after{
+    content:"";
+    position:absolute;
+    top:0; left:-75%;
+    width:50%; height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+    transform:skewX(-20deg);
+    animation:shine 3s ease-in-out infinite;
+  }
+  @keyframes shine{
+    0%{ left:-75%; }
+    35%{ left:130%; }
+    100%{ left:130%; }
+  }
+  @keyframes btnGlow{
+    0%,100%{ background-position:0% 50%; box-shadow:0 10px 24px rgba(107,15,38,0.4); }
+    50%{ background-position:100% 50%; box-shadow:0 12px 30px rgba(198,41,79,0.5); }
+  }
+  .btn-primary:hover{ transform:translateY(-3px) scale(1.03); box-shadow:0 16px 32px rgba(107,15,38,0.5); }
+
+  .btn-secondary{
+    background:transparent;
+    border:2px solid rgba(74,16,32,0.4);
+    color:var(--ink);
+  }
+  .btn-secondary:hover{ background:rgba(74,16,32,0.06); }
+
+  #noBtn{
+    position:relative;
+    transition:box-shadow 0.18s ease;
+    background:rgba(255,255,255,0.7);
+    border:2px solid var(--maroon-deep);
+    color:var(--maroon-deep);
+    box-shadow:0 6px 16px rgba(107,15,38,0.18);
+    backdrop-filter:blur(4px);
+  }
+  #noBtn:hover{
+    box-shadow:0 8px 20px rgba(107,15,38,0.3);
+  }
+  #noBtn.jumping{
+    animation:jumpBounce 0.5s cubic-bezier(.36,.07,.19,.97);
+  }
+  @keyframes jumpBounce{
+    0%{ transform:translateY(0) scale(1,1); }
+    12%{ transform:translateY(0) scaleY(0.78) scaleX(1.12); }
+    38%{ transform:translateY(-55px) scale(1,1) rotate(-6deg); }
+    55%{ transform:translateY(-55px) scaleY(1.08) scaleX(0.95) rotate(6deg); }
+    72%{ transform:translateY(0) scaleY(0.82) scaleX(1.1); }
+    86%{ transform:translateY(-12px) scale(1,1); }
+    100%{ transform:translateY(0) scale(1,1); }
+  }
+
+  .dust-particle{
+    position:fixed;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(200,170,150,0.9), rgba(200,170,150,0));
+    pointer-events:none;
+    z-index:50;
+    animation:dustPuff 0.55s ease-out forwards;
+  }
+  @keyframes dustPuff{
+    0%{ opacity:0.9; transform:translate(0,0) scale(1); }
+    100%{ opacity:0; transform:translate(var(--dx), var(--dy)) scale(0.2); }
+  }
+
+  /* Screen 4 — Birthday reveal */
+  #screen4 h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:clamp(2.6rem, 11vw, 4.4rem);
+    color:var(--white);
+    -webkit-text-stroke:2.5px var(--maroon-deep);
+    paint-order:stroke fill;
+    text-shadow:4px 4px 0 rgba(0,0,0,0.25);
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+  #screen4 .name-tag{
+    font-family:'Dancing Script', cursive;
+    font-weight:700;
+    font-size:clamp(2.4rem, 9vw, 3.6rem);
+    color:var(--maroon);
+    margin-bottom:24px;
+    text-shadow:0 4px 18px rgba(107,15,38,0.25);
+  }
+  #screen4 .love-line{
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--ink);
+    opacity:0.9;
+    margin-top:16px;
+    display:inline-block;
+  }
+
+  /* Screen 5 — Envelope */
+  .envelope-wrap{
+    cursor:pointer;
+    width:180px;
+    height:130px;
+    position:relative;
+    margin:0 auto 26px;
+  }
+
+  .envelope-body{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, #F4B8C6, #E8879E);
+    border-radius:8px;
+    box-shadow:0 10px 24px rgba(107,15,38,0.3);
+    overflow:hidden;
+  }
+
+  .envelope-flap{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:65px;
+    background:linear-gradient(135deg, var(--maroon-light), var(--maroon-deep));
+    clip-path:polygon(0 0, 100% 0, 50% 90%);
+    transform-origin:top center;
+    backface-visibility:hidden;
+    transition:transform 0.6s ease;
+    z-index:3;
+  }
+
+  .envelope-wrap.open .envelope-flap{
+    transform:rotateX(180deg);
+  }
+
+  .seal{
+    position:absolute;
+    top:38px; left:50%;
+    transform:translateX(-50%);
+    width:32px; height:32px;
+    background:var(--gold);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    font-size:16px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.2);
+    z-index:4;
+    transition:opacity 0.3s ease;
+  }
+  .envelope-wrap.open .seal{ opacity:0; }
+
+  .letter{
+    position:absolute;
+    left:8px; right:8px;
+    top:60px;
+    background:var(--cream);
+    border-radius:6px;
+    padding:16px 14px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(0) scale(0.85);
+    transition:transform 0.6s ease 0.25s, opacity 0.5s ease 0.25s, visibility 0s linear 0.75s, z-index 0s linear 0.75s;
+    z-index:1;
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  .envelope-wrap.open .letter{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(-195px) scale(1.35);
+    z-index:5;
+    transition:transform 0.6s ease 0.35s, opacity 0.5s ease 0.35s, visibility 0s linear 0s, z-index 0s linear 0.35s;
+  }
+
+  .letter p{
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    color:var(--maroon-deep);
+    font-size:14px;
+  }
+
+  .hint{
+    font-size:13px;
+    opacity:0.7;
+    margin-top:10px;
+    font-weight:500;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #noBtn.jumping{ animation:none !important; }
+  }
+
+  /* Screen 5 continue button */
+  #continueBtn{
+    display:none;
+    margin-top:18px;
+  }
+
+  /* Screen 6 — Outro */
+  #screen6 .outro-title{
+    font-size:1.7rem;
+    margin-bottom:6px;
+  }
+  #screen6 .outro-sub{
+    font-size:0.95rem;
+    opacity:0.75;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  #screen6 .signature{
+    font-family:'Dancing Script', cursive;
+    font-weight:700;
+    font-size:clamp(1.8rem, 7vw, 2.6rem);
+    color:var(--maroon);
+    margin:10px 0 30px;
+    text-shadow:0 4px 16px rgba(107,15,38,0.2);
+  }
+
+  .love-box{
+    margin-top:8px;
+    text-align:left;
+  }
+  .love-box label{
+    display:block;
+    font-size:0.95rem;
+    font-weight:700;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .love-box textarea{
+    width:100%;
+    min-height:90px;
+    border-radius:14px;
+    border:2px solid rgba(107,15,38,0.25);
+    padding:14px;
+    font-family:'Poppins', sans-serif;
+    font-size:15px;
+    resize:vertical;
+    background:rgba(255,255,255,0.8);
+    color:var(--ink);
+    outline:none;
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .love-box textarea:focus{
+    border-color:var(--maroon-deep);
+    box-shadow:0 0 0 4px rgba(107,15,38,0.12);
+  }
+
+  .love-box .btn-row{
+    margin-top:18px;
+    justify-content:center;
+  }
+
+  .outro-btns{
+    margin-top:24px;
+    justify-content:center;
+  }
+
+  #sendLoveBtn, #replayBtn{
+    min-width:220px;
+  }
+</style>
+</head>
+<body>
+
+<div class="side-shape side-shape-left"></div>
+<div class="side-shape side-shape-right"></div>
+
+<!-- Screen 1 -->
+<div class="screen active" id="screen1">
+  <div class="card">
+    <svg class="screen-cat" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 45 L40 10 L55 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M115 45 L100 10 L85 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M32 44 L42 22 L50 40 Z" fill="#F4B8C6"/>
+      <path d="M108 44 L98 22 L90 40 Z" fill="#F4B8C6"/>
+      <circle cx="70" cy="78" r="52" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <circle cx="48" cy="72" r="14" fill="#FFFFFF" stroke="#6B0F26" stroke-width="2.5"/>
+      <circle cx="92" cy="72" r="14" fill="#FFFFFF" stroke="#6B0F26" stroke-width="2.5"/>
+      <circle cx="50" cy="74" r="7" fill="#2B0A14"/>
+      <circle cx="94" cy="74" r="7" fill="#2B0A14"/>
+      <circle cx="47" cy="71" r="2.4" fill="#FFFFFF"/>
+      <circle cx="91" cy="71" r="2.4" fill="#FFFFFF"/>
+      <path d="M62 90 Q70 96 78 90" stroke="#6B0F26" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="70" cy="86" rx="5" ry="4" fill="#E8879E"/>
+      <line x1="18" y1="88" x2="42" y2="84" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="18" y1="98" x2="42" y2="98" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="98" y1="84" x2="122" y2="88" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="98" y1="98" x2="122" y2="98" stroke="#6B0F26" stroke-width="2"/>
+    </svg>
+    <h1 class="big-text">Hey!! I made something for you</h1>
+    <p class="sub-text">Do you want to see?</p>
+    <div class="btn-row">
+      <button class="btn-primary" id="yesBtn">Yes</button>
+      <button class="btn-secondary" id="noBtn">No</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 2 -->
+<div class="screen" id="screen2">
+  <div class="card">
+    <svg class="screen-cat" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 45 L40 10 L55 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M115 45 L100 10 L85 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M32 44 L42 22 L50 40 Z" fill="#F4B8C6"/>
+      <path d="M108 44 L98 22 L90 40 Z" fill="#F4B8C6"/>
+      <circle cx="70" cy="78" r="52" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M38 58 L58 66" stroke="#6B0F26" stroke-width="4" stroke-linecap="round"/>
+      <path d="M102 58 L82 66" stroke="#6B0F26" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="49" cy="76" rx="9" ry="6" fill="#2B0A14"/>
+      <ellipse cx="91" cy="76" rx="9" ry="6" fill="#2B0A14"/>
+      <path d="M60 96 Q70 90 80 96" stroke="#6B0F26" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="70" cy="86" rx="5" ry="4" fill="#E8879E"/>
+      <line x1="16" y1="86" x2="40" y2="90" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="16" y1="98" x2="40" y2="98" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="100" y1="90" x2="124" y2="86" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="100" y1="98" x2="124" y2="98" stroke="#6B0F26" stroke-width="2"/>
+    </svg>
+    <h1 class="big-text">How dare you 😤 GO BACK</h1>
+    <div class="btn-row">
+      <button class="btn-primary" id="goBackBtn">Go Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 3 -->
+<div class="screen" id="screen3">
+  <div class="card">
+    <svg class="screen-cat" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 45 L40 10 L55 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M115 45 L100 10 L85 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M32 44 L42 22 L50 40 Z" fill="#F4B8C6"/>
+      <path d="M108 44 L98 22 L90 40 Z" fill="#F4B8C6"/>
+      <circle cx="70" cy="78" r="52" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M40 74 Q49 66 58 74" stroke="#6B0F26" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M82 74 Q91 66 100 74" stroke="#6B0F26" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="42" cy="88" rx="10" ry="6" fill="#F4B8C6" opacity="0.8"/>
+      <ellipse cx="98" cy="88" rx="10" ry="6" fill="#F4B8C6" opacity="0.8"/>
+      <path d="M60 92 Q70 100 80 92" stroke="#6B0F26" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="70" cy="84" rx="5" ry="4" fill="#E8879E"/>
+      <g transform="translate(70,26) rotate(-10)">
+        <path d="M-14 0 Q-24 -10 -14 -14 Q-4 -10 0 0 Z" fill="#9B1B3D" stroke="#6B0F26" stroke-width="2"/>
+        <path d="M14 0 Q24 -10 14 -14 Q4 -10 0 0 Z" fill="#9B1B3D" stroke="#6B0F26" stroke-width="2"/>
+        <circle cx="0" cy="0" r="4" fill="#F0B429"/>
+      </g>
+    </svg>
+    <h1 class="big-text">That's a good gurll 😊</h1>
+    <div class="btn-row">
+      <button class="btn-primary" id="next1Btn">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 4 -->
+<div class="screen" id="screen4">
+  <div class="card">
+    <svg class="screen-cat" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 45 L40 10 L55 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M115 45 L100 10 L85 40 Z" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <path d="M32 44 L42 22 L50 40 Z" fill="#F4B8C6"/>
+      <path d="M108 44 L98 22 L90 40 Z" fill="#F4B8C6"/>
+      <circle cx="70" cy="82" r="52" fill="#FFF8EC" stroke="#6B0F26" stroke-width="3"/>
+      <circle cx="49" cy="78" r="6" fill="#2B0A14"/>
+      <circle cx="91" cy="78" r="6" fill="#2B0A14"/>
+      <circle cx="47" cy="76" r="2" fill="#FFFFFF"/>
+      <circle cx="89" cy="76" r="2" fill="#FFFFFF"/>
+      <path d="M52 96 Q70 112 88 96" stroke="#6B0F26" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="70" cy="88" rx="5" ry="4" fill="#E8879E"/>
+      <ellipse cx="44" cy="92" rx="8" ry="5" fill="#F4B8C6" opacity="0.7"/>
+      <ellipse cx="96" cy="92" rx="8" ry="5" fill="#F4B8C6" opacity="0.7"/>
+      <line x1="14" y1="90" x2="38" y2="88" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="14" y1="100" x2="38" y2="98" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="102" y1="88" x2="126" y2="90" stroke="#6B0F26" stroke-width="2"/>
+      <line x1="102" y1="98" x2="126" y2="100" stroke="#6B0F26" stroke-width="2"/>
+      <g transform="translate(70,8)">
+        <path d="M-18 32 L0 -10 L18 32 Z" fill="#9B1B3D" stroke="#6B0F26" stroke-width="2.5"/>
+        <circle cx="0" cy="32" r="3" fill="#F0B429"/>
+        <circle cx="-8" cy="16" r="3" fill="#F0B429"/>
+        <circle cx="8" cy="16" r="3" fill="#F0B429"/>
+        <circle cx="0" cy="-10" r="6" fill="#F0B429"/>
+      </g>
+    </svg>
+    <h1>HAPPY BIRTHDAY</h1>
+    <div class="name-tag">Fatima</div>
+    <p class="sub-text">You are my favorite notification 🔔💗<br>
+    <span class="love-line">Stay Cute, Stay Happy, Stay Mine</span></p>
+    <div class="btn-row">
+      <button class="btn-primary" id="next2Btn">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 5 -->
+<div class="screen" id="screen5">
+  <div class="card">
+    <div class="envelope-wrap" id="envelope">
+      <div class="letter">
+        <p>I just wanted to say — you make ordinary days feel a little better just by being in them.</p>
+        <p>Happy birthday, Fatima. Hope this year brings you all the good stuff you deserve.</p>
+        <p class="letter-sign">— Moosa</p>
+      </div>
+      <div class="envelope-flap"></div>
+      <div class="seal">♥</div>
+      <div class="envelope-body"></div>
+    </div>
+    <button class="btn-primary" id="envelopeBtn">Click On Envelop</button>
+    <p class="hint" id="envHint">tap the envelope or the button</p>
+    <button class="btn-primary" id="continueBtn">Continue</button>
+  </div>
+</div>
+
+<!-- Screen 6 — Outro -->
+<div class="screen" id="screen6">
+  <div class="card">
+    <h1 class="big-text outro-title">That's it for now 💌</h1>
+    <p class="outro-sub">Made with love, just for you</p>
+    <div class="signature">Best wishes, Moosa</div>
+
+    <div class="love-box">
+      <label for="loveInput">Express your love for me 💭</label>
+      <textarea id="loveInput" placeholder="Type it here, in your own words..."></textarea>
+      <div class="btn-row">
+        <button class="btn-primary" id="sendLoveBtn">Send via WhatsApp</button>
+      </div>
+    </div>
+
+    <div class="btn-row outro-btns">
+      <button class="btn-secondary" id="replayBtn">Replay ↻</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const screens = {
+    1: document.getElementById('screen1'),
+    2: document.getElementById('screen2'),
+    3: document.getElementById('screen3'),
+    4: document.getElementById('screen4'),
+    5: document.getElementById('screen5'),
+    6: document.getElementById('screen6'),
+  };
+
+  function goTo(n){
+    const next = screens[n];
+    const current = document.querySelector('.screen.active');
+    if(current === next) return;
+
+    if(current){
+      current.classList.remove('active');
+      current.classList.add('leaving');
+      setTimeout(()=>{ current.classList.remove('leaving'); }, 1250);
+    }
+    next.classList.add('active');
+  }
+
+  document.getElementById('yesBtn').addEventListener('click', ()=> goTo(3));
+  document.getElementById('goBackBtn').addEventListener('click', ()=> goTo(1));
+  document.getElementById('next1Btn').addEventListener('click', ()=> goTo(4));
+  document.getElementById('next2Btn').addEventListener('click', ()=> goTo(5));
+  document.getElementById('continueBtn').addEventListener('click', ()=> goTo(6));
+  document.getElementById('replayBtn').addEventListener('click', ()=> goTo(1));
+
+  // No button — never navigates. On hover it jumps to a new random spot with a puff of dust.
+  const noBtn = document.getElementById('noBtn');
+  const btnRow = document.querySelector('#screen1 .btn-row');
+
+  function spawnDust(x, y){
+    const count = 10;
+    for(let i=0;i<count;i++){
+      const d = document.createElement('div');
+      d.className = 'dust-particle';
+      const angle = Math.PI + Math.random()*Math.PI; // spread downward/sideways
+      const dist = 20 + Math.random()*30;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.abs(Math.sin(angle) * dist) * 0.6 + 6;
+      d.style.setProperty('--dx', dx + 'px');
+      d.style.setProperty('--dy', dy + 'px');
+      d.style.left = (x + (Math.random()*16 - 8)) + 'px';
+      d.style.top = y + 'px';
+      document.body.appendChild(d);
+      setTimeout(()=> d.remove(), 600);
+    }
+  }
+
+  function moveToRandomSpot(){
+    const rowRect = btnRow.getBoundingClientRect();
+    const maxX = Math.max(rowRect.width - noBtn.offsetWidth - 10, 0);
+    const maxY = Math.max(rowRect.height - noBtn.offsetHeight - 10, 0);
+    const randX = Math.random() * maxX - maxX/2;
+    const randY = Math.random() * maxY - maxY/2;
+    noBtn.style.position = 'relative';
+    noBtn.style.left = randX + 'px';
+    noBtn.style.top = randY + 'px';
+  }
+
+  function jumpAndPuff(){
+    const before = noBtn.getBoundingClientRect();
+    spawnDust(before.left + before.width/2, before.bottom);
+
+    moveToRandomSpot();
+
+    noBtn.classList.remove('jumping');
+    void noBtn.offsetWidth; // force reflow so the animation can restart
+    noBtn.classList.add('jumping');
+
+    setTimeout(()=>{
+      const after = noBtn.getBoundingClientRect();
+      spawnDust(after.left + after.width/2, after.bottom);
+    }, 380);
+  }
+
+  noBtn.addEventListener('mouseenter', jumpAndPuff);
+
+  noBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    jumpAndPuff();
+  });
+
+  noBtn.addEventListener('touchstart', function(e){
+    e.preventDefault();
+    jumpAndPuff();
+  }, {passive:false});
+
+  // Envelope open
+  const envelope = document.getElementById('envelope');
+  const envHint = document.getElementById('envHint');
+  const envelopeBtn = document.getElementById('envelopeBtn');
+
+  function openEnvelope(){
+    envelope.classList.add('open');
+    envHint.textContent = 'with all my heart 💌';
+    envelopeBtn.style.display = 'none';
+    document.getElementById('continueBtn').style.display = 'inline-block';
+  }
+
+  envelope.addEventListener('click', openEnvelope);
+  envelopeBtn.addEventListener('click', openEnvelope);
+
+  // Send love message via WhatsApp
+  const whatsappNumber = '923400239057';
+  document.getElementById('sendLoveBtn').addEventListener('click', function(){
+    const input = document.getElementById('loveInput');
+    const text = input.value.trim();
+    const message = text
+      ? `Fatima here 💗 you asked me to express my love, so here it is:\n\n"${text}"`
+      : `Fatima here 💗 I read your whole birthday page... and I just wanted to say I love you too.`;
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  });
+})();
+</script>
+</body>
+</html>
